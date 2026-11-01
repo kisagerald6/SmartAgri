@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E3B28">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SmartAgri</title>
+<link rel="stylesheet" href="assets/bootstrap.min.css">
+<link rel="stylesheet" href="assets/bootstrap-icons.min.css">
+<style>
+@font-face{font-family:"Archivo";src:url(assets/fonts/archivo-latin-wght-normal.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Public Sans";src:url(assets/fonts/public-sans-latin-wght-normal.woff2) format("woff2");font-weight:100 900;font-display:swap}
+
+:root{
+  --bg:#EBEFEA;--surf:#FFFFFF;--surf2:#F5F7F4;--ink:#14201A;--mut:#5A6861;--line:#D6DDD7;--line2:#E6EBE6;
+  --forest:#0E3B28;--forest2:#15513A;--act:#1B7A4B;--act-h:#166740;--stop:#C62F2F;
+  --ok:#1E7F4F;--warn:#B26A00;--crit:#C62F2F;--info:#1D6FB8;--idle:#7A8780;
+  --c-soil:#A85A28;--c-food:#6A47B5;--c-tank:#1D6FB8;--c-flow:#0E8A7E;
+  --side:236px;
+}
+[data-bs-theme=dark]{
+  --bg:#0B1310;--surf:#121D18;--surf2:#17251F;--ink:#E6EEE9;--mut:#94A69C;--line:#26362D;--line2:#1E2C25;
+  --forest:#0A2619;--forest2:#103624;--act:#2FA46A;--act-h:#3BB77B;--stop:#E0524F;
+  --ok:#4CC38A;--warn:#E6A03C;--crit:#FF7474;--info:#6BB1F2;--idle:#86958D;
+  --c-soil:#E39A66;--c-food:#B79CF2;--c-tank:#6BB1F2;--c-flow:#4FD1C5;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{font-size:15px}
+body{--bs-body-bg:var(--bg);--bs-body-color:var(--ink);background:var(--bg);color:var(--ink);
+  font-family:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45;transition:background .25s,color .25s}
+h1,h2,h3,.disp{font-family:"Archivo","Public Sans",system-ui,sans-serif;letter-spacing:-.012em}
+.tnum{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--info);outline-offset:2px}
+a{color:inherit}
+.mut{color:var(--mut)}.sm{font-size:.87rem}
+.lnk{font-size:.9rem;font-weight:600;color:var(--act);text-decoration:none}.lnk:hover{text-decoration:underline}
+
+/* ---------- shell ---------- */
+.side{display:none}
+.appbar{position:sticky;top:0;z-index:40;height:54px;background:var(--forest);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;font-family:"Archivo";font-weight:700;font-size:1.15rem;letter-spacing:-.01em;line-height:1.1}
+.brand small{display:block;font-family:"Public Sans";font-weight:500;font-size:.72rem;opacity:.7;letter-spacing:0}
+.logo{width:32px;height:32px;border-radius:8px;background:var(--act);display:grid;place-items:center;color:#fff;flex:none}
+.logo svg{width:20px;height:20px}
+.status{display:inline-flex;align-items:center;gap:7px;font-size:.84rem;font-weight:600;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--surf);color:var(--ink)}
+.appbar .status{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18);color:#fff}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--crit)}
+.status[data-s=live] i{background:#4CC38A}.status[data-s=demo] i{background:#E6A03C}
+.content{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+.wrap{padding:0 12px 12px}
+.phead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:16px 12px 10px}
+.phead h1{font-size:1.5rem;font-weight:700;margin:0}
+.phead p{margin:2px 0 0;color:var(--mut);font-size:.9rem;display:none}
+.pmeta{display:flex;align-items:center;gap:12px;font-size:.84rem;color:var(--mut)}
+.pmeta .status{display:none}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:grid;grid-template-columns:repeat(5,1fr);background:var(--surf);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tab{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 0 7px;text-decoration:none;color:var(--mut);font-size:.72rem;font-weight:600}
+.tab i{font-size:1.3rem;line-height:1.2}
+.tab.on{color:var(--act)}
+.tab.on::before{content:"";position:absolute;top:0;left:22%;right:22%;height:3px;border-radius:0 0 3px 3px;background:var(--act)}
+.tab .bdg{position:absolute;top:4px;left:calc(50% + 8px);min-width:17px;height:17px;border-radius:9px;background:var(--crit);color:#fff;font-size:.66rem;display:grid;place-items:center;padding:0 4px;font-weight:700}
+body[data-view=welcome] .tabbar,body[data-view=welcome] .appbar,body[data-view=welcome] .phead,body[data-view=welcome] .side{display:none!important}
+body[data-view=welcome] .content{padding:0}
+
+@media (min-width:992px){
+  html{font-size:15.5px}
+  .appbar,.tabbar{display:none}
+  .side{display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;width:var(--side);background:var(--forest);color:#fff;padding:20px 12px;z-index:30}
+  .side .brand{padding:2px 8px 22px}
+  .side nav{display:grid;gap:2px}
+  .side .tab{flex-direction:row;gap:12px;padding:10px 12px;border-radius:8px;font-size:.95rem;color:rgba(255,255,255,.72)}
+  .side .tab i{font-size:1.1rem;width:20px;text-align:center}
+  .side .tab:hover{background:rgba(255,255,255,.07);color:#fff}
+  .side .tab.on{background:rgba(255,255,255,.13);color:#fff}
+  .side .tab.on::before{left:0;right:auto;top:9px;bottom:9px;width:3px;height:auto;border-radius:0 3px 3px 0;background:#4CC38A}
+  .side .tab .bdg{position:static;margin-left:auto}
+  .side-foot{margin-top:auto;padding:12px 10px 0;border-top:1px solid rgba(255,255,255,.12);font-size:.85rem}
+  .side-foot b{display:block;font-weight:600}.side-foot span{opacity:.7;display:block}
+  .content{margin-left:var(--side);padding:0 0 40px}
+  .phead{padding:28px 32px 16px;max-width:1280px}
+  .phead h1{font-size:1.75rem}.phead p{display:block}
+  .pmeta .status{display:inline-flex}
+  .wrap{padding:0 32px 24px;max-width:1280px}
+  body[data-view=welcome] .content{margin-left:0}
+}
+
+.page{display:none}.page.on{display:block}
+/* ---------- cards ---------- */
+.card{background:var(--surf);border:1px solid var(--line);border-radius:12px;--bs-card-bg:var(--surf);color:var(--ink)}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line2);min-height:48px}
+.card-h h2{font-size:1rem;font-weight:650;margin:0}
+.card-b{padding:14px}
+.stack{display:grid;gap:12px}
+@media (min-width:992px){.stack{gap:16px}}
+.cols2{display:grid;gap:12px}
+@media (min-width:992px){.cols2{grid-template-columns:1fr 1fr;gap:16px;align-items:start}.span2{grid-column:1/-1}}
+
+/* ---------- status banner ---------- */
+.banner{--sev:var(--idle);display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid color-mix(in srgb,var(--sev) 35%,var(--line));border-left:4px solid var(--sev);border-radius:12px;background:color-mix(in srgb,var(--sev) 8%,var(--surf));flex-wrap:wrap;margin-bottom:12px}
+.banner[data-sev=ok]{--sev:var(--ok)}.banner[data-sev=warn]{--sev:var(--warn)}.banner[data-sev=crit]{--sev:var(--crit)}.banner[data-sev=info]{--sev:var(--info)}
+.banner>i{font-size:1.4rem;color:var(--sev);flex:none}
+.bn-t{flex:1;min-width:200px}.bn-t b{display:block;font-weight:650;font-size:1.02rem}.bn-t span{color:var(--mut);font-size:.92rem}
+.bn-a{display:flex;gap:8px;flex-wrap:wrap}
+@media (min-width:992px){.banner{margin-bottom:16px;padding:14px 18px}}
+
+/* ---------- KPI strip ---------- */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line2);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.kpi{--sev:var(--idle);background:var(--surf);border:0;padding:12px 14px;text-align:left;color:var(--ink);display:flex;flex-direction:column;gap:2px;min-height:96px;transition:background .15s}
+.kpi:hover{background:var(--surf2)}
+.kpi[data-sev=ok]{--sev:var(--ok)}.kpi[data-sev=warn]{--sev:var(--warn)}.kpi[data-sev=crit]{--sev:var(--crit)}.kpi[data-sev=info]{--sev:var(--info)}
+.k-l{font-size:.87rem;color:var(--mut);font-weight:600}
+.k-v{font-family:"Archivo";font-size:1.85rem;font-weight:650;line-height:1.1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.k-v small{font-size:.9rem;color:var(--mut);margin-left:3px;font-weight:600;letter-spacing:0}
+.k-s{display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600;color:var(--sev);margin-top:auto}
+.k-s::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--sev);flex:none}
+.spark{display:none;width:100%;height:26px;margin-top:6px}
+@media (min-width:768px){.kpis{grid-template-columns:repeat(6,1fr);margin-bottom:16px}.kpi{min-height:128px;padding:14px 16px}.spark{display:block}.k-v{font-size:2rem}}
+
+/* ---------- flow diagram ---------- */
+.flow{display:flex;flex-direction:column;align-items:stretch;padding:14px}
+.node{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;background:var(--surf2);padding:10px 12px;min-height:56px;text-align:left;color:var(--ink);transition:border-color .15s}
+.node:hover{border-color:var(--act)}
+.n-h{font-size:.87rem;font-weight:600;color:var(--mut);min-width:78px}
+.n-v{font-family:"Archivo";font-size:1.3rem;font-weight:650;font-variant-numeric:tabular-nums;margin-left:auto;white-space:nowrap}
+.n-v small{font-size:.75em;color:var(--mut);font-weight:600;margin-left:2px}
+.mbar{flex:1;height:8px;border-radius:4px;background:var(--line2);overflow:hidden;max-width:120px}
+.mbar i{display:block;height:100%;width:0;border-radius:inherit;background:var(--bc,var(--c-tank));transition:width .8s}
+.led{width:10px;height:10px;border-radius:50%;background:var(--idle)}
+.flow.run .led{background:var(--info);box-shadow:0 0 0 4px color-mix(in srgb,var(--info) 25%,transparent)}
+.pipe{align-self:center;width:4px;height:20px;background:var(--line);position:relative;overflow:hidden}
+.flow.run .pipe::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(180deg,var(--c-tank) 0 6px,transparent 6px 12px);animation:py .55s linear infinite}
+@keyframes py{from{background-position:0 0}to{background-position:0 12px}}
+@keyframes px{from{background-position:0 0}to{background-position:12px 0}}
+@media (min-width:768px){
+  .flow{flex-direction:row;align-items:stretch;padding:18px}
+  .node{flex:1;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:8px;min-height:124px;padding:12px 14px}
+  .n-h{min-width:0}.n-v{margin-left:0;font-size:1.5rem}.mbar{order:3;width:100%;max-width:none;flex:none}
+  .pipe{align-self:center;width:34px;height:4px;flex:none}
+  .flow.run .pipe::after{background:repeating-linear-gradient(90deg,var(--c-tank) 0 6px,transparent 6px 12px);animation:px .55s linear infinite}
+}
+
+/* ---------- controls ---------- */
+.btn{--bs-btn-border-radius:8px;border-radius:8px;font-weight:600;padding:.5rem 1rem;min-height:44px;border-width:1px;font-size:.95rem;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn-sm{min-height:36px;padding:.3rem .8rem;font-size:.88rem}
+.btn-act{background:var(--act);border-color:var(--act);color:#fff}.btn-act:hover,.btn-act:active{background:var(--act-h);border-color:var(--act-h);color:#fff}
+.btn-stop{background:var(--stop);border-color:var(--stop);color:#fff}.btn-stop:hover,.btn-stop:active{filter:brightness(1.08);color:#fff;background:var(--stop);border-color:var(--stop)}
+.btn-ghost{background:var(--surf);border-color:var(--line);color:var(--ink)}.btn-ghost:hover,.btn-ghost:active{background:var(--surf2);border-color:var(--mut);color:var(--ink)}
+.btn-danger-o{background:transparent;border-color:var(--crit);color:var(--crit)}.btn-danger-o:hover{background:var(--crit);color:#fff;border-color:var(--crit)}
+.btn:disabled{opacity:.45}
+.segc{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surf);max-width:100%}
+.segc button{border:0;background:transparent;color:var(--ink);font-weight:600;font-size:.9rem;padding:.4rem .85rem;min-height:38px;border-right:1px solid var(--line2);white-space:nowrap}
+.segc button:last-child{border-right:0}
+.segc button.on{background:var(--forest);color:#fff}
+.segc.full{display:flex;width:100%}.segc.full button{flex:1;padding:.4rem .2rem}
+.ctl-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.ctl-state{font-family:"Archivo";font-size:1.5rem;font-weight:650;line-height:1.15}
+.tag{font-size:.78rem;font-weight:700;padding:3px 9px;border-radius:6px;background:var(--surf2);border:1px solid var(--line);color:var(--mut);white-space:nowrap}
+.tag[data-sev=info]{color:var(--info);border-color:color-mix(in srgb,var(--info) 40%,var(--line));background:color-mix(in srgb,var(--info) 9%,var(--surf))}
+.progress-l{height:6px;border-radius:3px;background:var(--line2);overflow:hidden;margin-bottom:14px}
+.progress-l i{display:block;height:100%;width:0;background:var(--info);transition:width 1s linear}
+.field-l{font-size:.85rem;font-weight:600;color:var(--mut);margin-bottom:6px}
+.rowline{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-top:1px solid var(--line2);flex-wrap:wrap}
+.rowline>div:first-child{flex:1 1 200px;min-width:0}
+.rowline b{display:block;font-weight:600}
+.rowline .d{display:block;color:var(--mut);font-size:.87rem;line-height:1.35}
+.card-b>.rowline:first-child{border-top:0;padding-top:0}
+.card-b>.rowline:last-child{padding-bottom:0}
+.hold{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:10px 12px;border-radius:8px;background:color-mix(in srgb,var(--warn) 11%,var(--surf));border:1px solid color-mix(in srgb,var(--warn) 35%,var(--line));font-size:.9rem;flex-wrap:wrap}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--surf);flex:none;margin-left:auto}
+.stepper button{width:42px;height:42px;border:0;background:transparent;color:var(--ink);font-size:1.25rem;font-weight:600;line-height:1}
+.stepper button:first-child{border-right:1px solid var(--line2)}.stepper button:last-child{border-left:1px solid var(--line2)}
+.stepper button:active{background:var(--surf2)}
+.stepper output{min-width:84px;text-align:center;font-family:"Archivo";font-weight:650;font-size:1.02rem;font-variant-numeric:tabular-nums}
+.stepper output small{font-family:"Public Sans";font-weight:600;color:var(--mut);margin-left:2px;font-size:.8em}
+.form-switch .form-check-input{width:2.7rem;height:1.45rem;margin:0;cursor:pointer;background-color:var(--line);border-color:var(--line)}
+.form-check-input:checked{background-color:var(--act);border-color:var(--act)}
+.form-switch .form-check-input:focus{box-shadow:none}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fact{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;padding:10px 12px}
+.fact b{font-family:"Archivo";font-size:1.5rem;font-weight:650;display:block;line-height:1.15;font-variant-numeric:tabular-nums}
+.fact>span{color:var(--mut);font-size:.85rem}
+.bar{height:10px;border-radius:5px;background:var(--line2);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--c-tank);border-radius:inherit;transition:width .8s}
+.bar.low i{background:var(--crit)}
+.bigv{font-family:"Archivo";font-weight:650;font-size:2.6rem;line-height:1;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
+.bigv small{font-size:1rem;color:var(--mut);font-weight:600;margin-left:4px;letter-spacing:0}
+.meter{position:relative;margin:34px 0 8px}
+.mz-wrap{display:flex;height:18px;border-radius:6px;overflow:hidden}
+.mz{display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:700;color:#fff;overflow:hidden;white-space:nowrap}
+.mz.low{background:#B94A5B}.mz.ok{background:#2E8B5C}.mz.rich{background:#4A6FB5}
+.mk{position:absolute;top:-5px;bottom:-5px;width:4px;margin-left:-2px;background:var(--ink);border-radius:2px;transition:left .8s cubic-bezier(.2,.8,.2,1)}
+.mk::before{content:attr(data-v);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;background:var(--ink);color:var(--surf);font-size:.78rem;font-weight:700;padding:1px 7px;border-radius:5px;white-space:nowrap}
+.steps{list-style:none;padding:0;margin:0;display:grid;gap:12px;counter-reset:s}
+.steps li{display:flex;gap:12px;counter-increment:s}
+.steps li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;background:var(--forest);color:#fff;font-weight:700;font-size:.85rem;display:grid;place-items:center;margin-top:1px}
+.steps b{display:block;font-weight:600}.steps small{display:block;color:var(--mut);font-size:.88rem}
+details.acc summary{font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;min-height:32px}
+details.acc summary::-webkit-details-marker{display:none}
+details.acc summary::after{content:"\F282";font-family:"bootstrap-icons";font-size:.8rem;transition:rotate .2s}
+details.acc[open] summary::after{rotate:180deg}
+details.acc .in{padding-top:12px}
+canvas.chart{width:100%;height:210px;display:block;touch-action:pan-y}
+@media (min-width:992px){canvas.chart{height:250px}}
+.chart-h{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.empty{text-align:center;padding:26px 14px;color:var(--mut)}
+.empty i{font-size:1.6rem;display:block;margin-bottom:4px;color:var(--ok)}
+
+/* ---------- alerts and log ---------- */
+.al{display:flex;gap:12px;padding:11px 14px;border-top:1px solid var(--line2);align-items:flex-start}
+.al:first-child{border-top:0}
+.al i{font-size:1.1rem;margin-top:2px}
+.al[data-sev=warn] i{color:var(--warn)}.al[data-sev=crit] i{color:var(--crit)}.al[data-sev=info] i{color:var(--info)}
+.al b{display:block;font-weight:600;font-size:.95rem}.al span{color:var(--mut);font-size:.88rem;line-height:1.35;display:block}
+.lh{display:none}
+.lr{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"lv lt" "le le";gap:3px 10px;padding:11px 14px;border-top:1px solid var(--line2);align-items:center}
+.lr.unread{box-shadow:inset 3px 0 0 var(--info)}
+.lv{grid-area:lv;font-size:.76rem;font-weight:700;padding:2px 8px;border-radius:5px;justify-self:start;background:var(--surf2);color:var(--mut);border:1px solid var(--line)}
+.lv[data-l=crit]{color:var(--crit);border-color:color-mix(in srgb,var(--crit) 40%,var(--line));background:color-mix(in srgb,var(--crit) 8%,var(--surf))}
+.lv[data-l=warn]{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line));background:color-mix(in srgb,var(--warn) 8%,var(--surf))}
+.lv[data-l=info]{color:var(--info);border-color:color-mix(in srgb,var(--info) 40%,var(--line));background:color-mix(in srgb,var(--info) 8%,var(--surf))}
+.lt{grid-area:lt;justify-self:end;color:var(--mut);font-size:.84rem;font-variant-numeric:tabular-nums}
+.le{grid-area:le}.le b{font-weight:600}.le span{display:block;color:var(--mut);font-size:.9rem;line-height:1.35}
+@media (min-width:768px){
+  .lh{display:grid;grid-template-columns:96px 150px 1fr;gap:12px;padding:8px 14px;font-size:.82rem;font-weight:600;color:var(--mut);background:var(--surf2);border-bottom:1px solid var(--line2)}
+  .lr{grid-template-columns:96px 150px 1fr;grid-template-areas:"lv lt le";gap:12px;align-items:start}
+  .lt{justify-self:start;padding-top:2px}
+}
+
+/* ---------- overview grid ---------- */
+.ov{display:flex;flex-direction:column;gap:12px}
+.ov-main,.ov-side{display:contents}
+.o-ctl{order:1}.o-alerts{order:2}.o-flow{order:3}.o-trend{order:4}.o-log{order:5}
+@media (min-width:992px){
+  .ov{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:16px;align-items:start}
+  .ov-main,.ov-side{display:flex;flex-direction:column;gap:16px}
+  .o-ctl,.o-alerts,.o-flow,.o-trend,.o-log{order:0}.o-log{grid-column:1/-1}
+}
+
+/* ---------- drawer / sheet ---------- */
+.offcanvas.sheet{--bs-offcanvas-bg:var(--surf);--bs-offcanvas-color:var(--ink);--bs-offcanvas-border-color:var(--line);--bs-offcanvas-height:auto;border-radius:16px 16px 0 0;max-height:90vh;padding-bottom:env(safe-area-inset-bottom)}
+.sheet .offcanvas-header{padding:14px 16px;border-bottom:1px solid var(--line2)}.sheet .offcanvas-title{font-size:1.1rem;font-weight:650;margin:0}
+.sheet .offcanvas-body{padding:16px}
+[data-bs-theme=dark] .btn-close{filter:invert(1)}
+@media (min-width:992px){
+  .offcanvas.sheet{top:0;bottom:0;left:auto;right:0;width:440px;max-height:none;height:100%;border-radius:0;border-left:1px solid var(--line);transform:translateX(100%)}
+  .offcanvas.sheet.showing,.offcanvas.sheet.show:not(.hiding){transform:none}
+}
+
+/* ---------- welcome ---------- */
+.wel{min-height:100vh;display:grid}
+.wel-l{background:var(--forest);color:#fff;padding:26px 22px 28px}
+.wel-l h1{font-size:1.75rem;font-weight:700;line-height:1.15;margin:22px 0 0;max-width:20ch}
+.wel-l ul{list-style:none;padding:0;margin:22px 0 0;display:none;gap:14px}
+.wel-l li{display:flex;gap:12px;align-items:flex-start;opacity:.92}.wel-l li i{font-size:1.2rem;color:#6EDFA6;margin-top:2px}
+.wel-l li b{display:block;font-weight:600}.wel-l li span{font-size:.9rem;opacity:.75}
+.wel-r{padding:26px 22px 40px;display:flex;flex-direction:column;justify-content:flex-start;max-width:520px;width:100%}
+.wel-r h2{font-size:1.4rem;font-weight:700;margin:0 0 6px}
+.inp{font-family:"Archivo";font-weight:600;font-size:1.3rem;border:1px solid var(--line);background:var(--surf);color:var(--ink);border-radius:8px;padding:.6rem .9rem;width:100%;min-height:50px}
+.inp:focus{border-color:var(--act);outline:0;box-shadow:0 0 0 3px color-mix(in srgb,var(--act) 22%,transparent)}
+.inp.bad{border-color:var(--crit)}
+.inp.sm{font-family:"Public Sans";font-size:1rem;font-weight:500;min-height:44px}
+.errmsg{color:var(--crit);font-weight:600;font-size:.92rem;min-height:1.3em;margin-top:6px}
+@media (min-width:992px){.wel{grid-template-columns:1.05fr 1fr}.wel-l{padding:48px 56px;display:flex;flex-direction:column}.wel-l h1{font-size:2.5rem;margin-top:auto}.wel-l ul{display:grid;margin-bottom:auto}.wel-r{padding:48px 64px;justify-self:center}}
+@media (min-width:640px) and (max-width:991px){.wel-l ul{display:grid;grid-template-columns:1fr 1fr 1fr}}
+
+body[data-view=welcome] .wrap{padding:0;max-width:none}
+.wel{grid-template-rows:auto 1fr}@media (min-width:992px){.wel{grid-template-rows:none}}
+/* ---------- misc ---------- */
+.offbar{display:none;align-items:center;gap:12px;background:var(--crit);color:#fff;border-radius:10px;padding:10px 14px;margin-bottom:12px;flex-wrap:wrap;font-size:.92rem}
+.offbar.on{display:flex}.offbar div{flex:1;min-width:200px}.offbar .btn{background:transparent;border-color:rgba(255,255,255,.6);color:#fff}
+.demo{display:none;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:10px 14px;border:1px dashed var(--warn);border-radius:10px;background:color-mix(in srgb,var(--warn) 7%,var(--surf));font-size:.9rem}
+.demo.on{display:flex}
+#toasts{position:fixed;left:50%;translate:-50% 0;bottom:calc(76px + env(safe-area-inset-bottom));z-index:1200;display:grid;gap:8px;width:min(94vw,420px)}
+@media (min-width:992px){#toasts{bottom:24px;left:calc(50% + var(--side)/2)}}
+.toast-i{--sev:var(--ok);background:var(--ink);color:var(--surf);border-radius:10px;padding:11px 14px;display:flex;gap:11px;align-items:flex-start;box-shadow:0 10px 28px rgba(0,0,0,.28);border-left:4px solid var(--sev)}
+.toast-i.warn{--sev:#E6A03C}.toast-i.bad{--sev:#FF7474}.toast-i.info{--sev:#6BB1F2}
+.toast-i i{color:var(--sev);margin-top:2px}.toast-i b{display:block;font-weight:600}.toast-i small{display:block;opacity:.8;font-size:.86rem;line-height:1.3}
+code{background:var(--surf2);border:1px solid var(--line2);border-radius:5px;padding:0 5px;color:var(--ink);font-size:.88em}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important}}
+</style>
+</head>
+<body data-view="overview">
+
+<aside class="side">
+  <a class="brand" href="#/overview"><span class="logo" data-logo></span><span>SmartAgri<small>Farm controller</small></span></a>
+  <nav data-nav></nav>
+  <div class="side-foot"><b data-t="site">My farm</b><span data-t="devShort">Not connected</span></div>
+</aside>
+
+<div class="content">
+  <header class="appbar">
+    <a class="brand" href="#/overview"><span class="logo" data-logo></span><span data-t="site">My farm</span></a>
+    <span class="status" data-status data-s="off"><i></i><span class="stxt">Offline</span></span>
+  </header>
+
+  <div class="phead" id="phead">
+    <div><h1 id="pTitle">Overview</h1><p id="pSub"></p></div>
+    <div class="pmeta"><span class="status" data-status data-s="off"><i></i><span class="stxt">Offline</span></span><span id="updated"></span></div>
+  </div>
+
+  <div class="wrap" id="wrap">
+    <div class="offbar" id="offBar" role="alert"><i class="bi bi-wifi-off fs-5"></i><div><b>Controller offline.</b> Check it has power and is on the same Wi-Fi. Retrying automatically.</div><a href="#/welcome" class="btn btn-sm">Change connection</a></div>
+    <div class="demo" id="demoBox"><b>Demo data.</b><span class="mut">Simulate:</span>
+      <button class="btn btn-ghost btn-sm" data-demo="drain">Low nutrients</button>
+      <button class="btn btn-ghost btn-sm" data-demo="dry">Dry soil</button>
+      <button class="btn btn-ghost btn-sm" data-demo="feed">Add fertiliser</button></div>
+
+    <!-- ============ OVERVIEW ============ -->
+    <section class="page" id="p-overview">
+      <div class="banner" id="banner" data-sev="idle"><i class="bi bi-hourglass-split" id="bnIc"></i><div class="bn-t"><b id="bnT">Connecting</b><span id="bnD"></span></div><div class="bn-a" id="bnA"></div></div>
+
+      <div class="kpis">
+        <button class="kpi" id="kSoil" data-sheet="soil"><span class="k-l">Soil moisture</span><span class="k-v"><span data-t="soilV">--</span><small>%</small></span><span class="k-s" data-t="soilChip">--</span><canvas class="spark" data-spark="soil"></canvas></button>
+        <button class="kpi" id="kFood" data-sheet="food"><span class="k-l">Nutrients</span><span class="k-v"><span data-t="foodV">--</span><small data-t="foodU">ppm</small></span><span class="k-s" data-t="foodChip">--</span><canvas class="spark" data-spark="food"></canvas></button>
+        <button class="kpi" id="kTank" data-sheet="tank"><span class="k-l">Tank level</span><span class="k-v"><span data-t="tankV">--</span><small>%</small></span><span class="k-s" data-t="tankChip">--</span><canvas class="spark" data-spark="tank"></canvas></button>
+        <button class="kpi" id="kFlow" data-sheet="flow"><span class="k-l">Flow rate</span><span class="k-v"><span data-t="flowV">--</span><small>L/min</small></span><span class="k-s" data-t="flowChip">--</span><canvas class="spark" data-spark="flow"></canvas></button>
+        <button class="kpi" id="kUsed" data-sheet="flow"><span class="k-l">Water used</span><span class="k-v"><span data-t="usedV">--</span><small>L</small></span><span class="k-s" data-t="usedChip">Total</span></button>
+        <button class="kpi" id="kPump" data-sheet="pump"><span class="k-l">Pump</span><span class="k-v"><span data-t="pumpWord">--</span></span><span class="k-s" data-t="pumpChip">--</span></button>
+      </div>
+
+      <div class="ov">
+        <div class="ov-main">
+          <div class="card o-flow"><div class="card-h"><h2>Irrigation flow</h2><span class="mut sm" data-t="flowNote"></span></div>
+            <div class="flow" id="flow">
+              <button class="node" data-sheet="tank"><span class="n-h">Tank</span><span class="mbar" style="--bc:var(--c-tank)"><i data-fill="tank"></i></span><span class="n-v"><span data-t="tankV">--</span><small>%</small></span></button>
+              <div class="pipe"></div>
+              <button class="node" data-sheet="pump"><span class="n-h">Pump</span><span class="led"></span><span class="n-v" data-t="pumpWord">--</span></button>
+              <div class="pipe"></div>
+              <button class="node" data-sheet="flow"><span class="n-h">Flow meter</span><span class="mbar" style="--bc:var(--c-flow)"><i data-fill="flow"></i></span><span class="n-v"><span data-t="flowV">--</span><small>L/min</small></span></button>
+              <div class="pipe"></div>
+              <button class="node" data-sheet="soil"><span class="n-h">Field soil</span><span class="mbar" style="--bc:var(--c-soil)"><i data-fill="soil"></i></span><span class="n-v"><span data-t="soilV">--</span><small>%</small></span></button>
+            </div></div>
+          <div class="card o-trend"><div class="card-h chart-h"><h2>Trends</h2><div class="d-flex gap-2 flex-wrap"><div class="segc" id="trendTabs"><button data-k="soil" class="on">Soil</button><button data-k="food">Nutrients</button><button data-k="tank">Tank</button><button data-k="flow">Flow</button></div><div class="segc seg-range"><button data-r="5m">5 min</button><button data-r="1h">1 h</button><button data-r="24h">24 h</button></div></div></div>
+            <div class="card-b"><canvas class="chart" id="chTrend" data-chart="soil"></canvas></div></div>
+        </div>
+        <div class="ov-side">
+          <div class="card o-ctl"><div class="card-h"><h2>Irrigation control</h2></div><div class="card-b" data-ctl></div></div>
+          <div class="card o-alerts"><div class="card-h"><h2>Active alerts</h2><a href="#/alerts" class="lnk">View all</a></div><div id="activeAlerts"></div></div>
+        </div>
+        <div class="card o-log"><div class="card-h"><h2>Recent events</h2><a href="#/alerts" class="lnk">View all</a></div><div class="lh"><span>Level</span><span>Time</span><span>Event</span></div><div id="homeLog"></div></div>
+      </div>
+    </section>
+
+    <!-- ============ IRRIGATION ============ -->
+    <section class="page" id="p-irrigation">
+      <div class="cols2">
+        <div class="card"><div class="card-h"><h2>Run irrigation</h2></div><div class="card-b" data-ctl></div></div>
+        <div class="card"><div class="card-h"><h2>Automatic rules</h2></div><div class="card-b">
+          <div class="rowline"><div><b>Start when soil moisture is below</b><span class="d">Irrigation starts automatically under this level.</span></div>
+            <div class="stepper" data-key="onBelow" data-min="0" data-max="95" data-step="5" data-unit="%"><button data-d="-1" aria-label="Decrease">−</button><output></output><button data-d="1" aria-label="Increase">+</button></div></div>
+          <div class="rowline"><div><b>Stop when soil moisture reaches</b><span class="d">The pump stops once this level is reached.</span></div>
+            <div class="stepper" data-key="offAbove" data-min="5" data-max="100" data-step="5" data-unit="%"><button data-d="-1" aria-label="Decrease">−</button><output></output><button data-d="1" aria-label="Increase">+</button></div></div>
+        </div></div>
+        <div class="card span2"><div class="card-h chart-h"><h2>Soil moisture</h2><div class="segc seg-range"><button data-r="5m">5 min</button><button data-r="1h">1 h</button><button data-r="24h">24 h</button></div></div><div class="card-b"><canvas class="chart" data-chart="soil"></canvas></div></div>
+        <div class="card"><div class="card-h"><h2>Water tank</h2><span class="mut sm"><span data-t="tankV">--</span>% full</span></div><div class="card-b">
+          <div class="bar" data-tankbar><i></i></div>
+          <p class="mut sm mt-2 mb-0" data-t="tankNote"></p>
+          <div class="rowline mt-3"><div><b>Pause irrigation when tank is below</b><span class="d">Protects the pump from running dry.</span></div>
+            <div class="stepper" data-key="minTank" data-min="5" data-max="60" data-step="5" data-unit="%"><button data-d="-1" aria-label="Decrease">−</button><output></output><button data-d="1" aria-label="Increase">+</button></div></div>
+        </div></div>
+        <div class="card"><div class="card-h"><h2>Flow and volume</h2></div><div class="card-b">
+          <div class="facts"><div class="fact"><b><span data-t="usedV">--</span> L</b><span>Total used</span></div><div class="fact"><b><span data-t="flowV">--</span> L/min</b><span>Flow now</span></div></div>
+          <button class="btn btn-ghost btn-sm mt-3" data-act="reset-flow">Reset total</button>
+        </div></div>
+        <div class="card span2"><div class="card-h"><h2>Pump protection</h2></div><div class="card-b">
+          <div class="rowline"><div><b>Longest single run</b><span class="d">The pump stops after this long, then rests.</span></div>
+            <div class="stepper" data-key="maxRunSec" data-scale="60" data-min="1" data-max="30" data-step="1" data-unit="min"><button data-d="-1" aria-label="Decrease">−</button><output></output><button data-d="1" aria-label="Increase">+</button></div></div>
+          <div class="rowline"><div><b>Rest after a long run</b><span class="d">Time before the pump can start again.</span></div>
+            <div class="stepper" data-key="cooldownSec" data-scale="60" data-min="0" data-max="30" data-step="1" data-unit="min"><button data-d="-1" aria-label="Decrease">−</button><output></output><button data-d="1" aria-label="Increase">+</button></div></div>
+          <div class="rowline"><div><b>Stop if flow is below</b><span class="d">Catches an empty tank or blocked line. Set 0 to turn off.</span></div>
+            <div class="stepper" data-key="minFlow" data-min="0" data-max="5" data-step="0.1" data-unit="L/min"><button data-d="-1" aria-label="Decrease">−</button><output></output><button data-d="1" aria-label="Increase">+</button></div></div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- ============ NUTRIENTS ============ -->
+    <section class="page" id="p-nutrients">
+      <div class="card" id="foodSetup"><div class="card-h"><h2>Set up nutrient monitoring</h2></div><div class="card-b">
+        <p class="mut mt-0">Add a soil EC/TDS probe to get an alert when nutrient levels fall too low.</p>
+        <ol class="steps"><li><div><b>Connect the probe</b><small>Analog EC/TDS probe to pin 32 on the controller.</small></div></li>
+          <li><div><b>Turn on monitoring</b><small>Press the button below.</small></div></li>
+          <li><div><b>Set the alert level</b><small>400 ppm is a sensible start. Adjust for your crop.</small></div></li></ol>
+        <button class="btn btn-act mt-3" data-act="food-on">Turn on nutrient monitoring</button></div></div>
+      <div class="cols2" id="foodMain">
+        <div class="card"><div class="card-h"><h2>Nutrient level</h2><span class="tag" data-t="foodChip" data-tagsev="food">--</span></div><div class="card-b">
+          <div class="bigv"><span data-t="foodV">--</span><small>ppm</small></div>
+          <p class="mt-2 mb-0 fw-semibold" data-t="foodVerdict"></p>
+          <div class="meter"><div class="mz-wrap"><div class="mz low" id="mzLow"><span>Low</span></div><div class="mz ok" id="mzOk"><span>Good</span></div><div class="mz rich" id="mzRich"><span>High</span></div></div><i class="mk" id="mk" data-v=""></i></div>
+          <p class="mut sm mb-0" data-t="foodNote"></p></div></div>
+        <div class="card"><div class="card-h"><h2>Alert settings</h2></div><div class="card-b">
+          <div class="rowline"><div><b>Alert when nutrients drop below</b><span class="d">Triggers after 20 seconds below this level.</span></div>
+            <div class="stepper" data-key="nutrLowPpm" data-min="50" data-max="3000" data-step="50" data-unit="ppm"><button data-d="-1" aria-label="Decrease">−</button><output></output><button data-d="1" aria-label="Increase">+</button></div></div>
+          <div class="rowline"><div><b>Nutrient monitoring</b><span class="d">Turn off if the probe is unplugged.</span></div><div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" role="switch" id="nutrSwitch" aria-label="Nutrient monitoring"></div></div>
+          <details class="acc mt-2"><summary>Advanced</summary><div class="in">
+            <div class="rowline" style="border:0;padding-top:0"><div><b>Full reading</b><span class="d">The ppm a well-fed crop shows. Scales the meter.</span></div>
+              <div class="stepper" data-key="nutrTarget" data-min="200" data-max="5000" data-step="100" data-unit="ppm"><button data-d="-1" aria-label="Decrease">−</button><output></output><button data-d="1" aria-label="Increase">+</button></div></div>
+            <p class="mut sm mb-0">The probe measures dissolved salts, so it shows how much fertiliser is present, not which nutrient (N, P or K) is short.</p></div></details></div></div>
+        <div class="card span2"><div class="card-h chart-h"><h2>Nutrient trend</h2><div class="segc seg-range"><button data-r="5m">5 min</button><button data-r="1h">1 h</button><button data-r="24h">24 h</button></div></div><div class="card-b"><canvas class="chart" data-chart="food"></canvas><p class="mut sm mb-0 mt-2">Readings count only while soil moisture is at least 30%.</p></div></div>
+        <div class="card span2"><div class="card-b"><details class="acc" id="tipsBox"><summary>What to do when nutrients are low</summary><div class="in">
+          <ol class="steps"><li><div><b>Apply fertiliser</b><small>Use a balanced NPK fertiliser at the label rate for your crop.</small></div></li>
+            <li><div><b>Irrigate to dissolve it</b><small>Water moves the fertiliser to the root zone.</small></div></li>
+            <li><div><b>Recheck after an hour</b><small>The reading rises as it dissolves. You'll get a message when it's back to normal.</small></div></li></ol></div></details></div></div>
+      </div>
+    </section>
+
+    <!-- ============ ALERTS ============ -->
+    <section class="page" id="p-alerts">
+      <div class="stack">
+        <div class="card"><div class="card-h chart-h"><h2>Event log</h2><div class="d-flex gap-2 flex-wrap"><div class="segc" id="logFilter"><button data-f="all" class="on">All</button><button data-f="crit">Critical</button><button data-f="warn">Warning</button><button data-f="info">Info</button></div><button class="btn btn-ghost btn-sm" id="notesRead">Mark read</button><button class="btn btn-ghost btn-sm" id="notesClear">Clear</button></div></div>
+          <div class="lh"><span>Level</span><span>Time</span><span>Event</span></div><div id="alertsList"></div></div>
+        <div class="card"><div class="card-h"><h2 data-t="pushTitle">Phone alerts</h2></div><div class="card-b">
+          <p class="mut mt-0" data-t="pushHelp">Receive alerts on your phone even when this app is closed.</p>
+          <ol class="steps" id="pushSteps"><li><div><b>Install the free ntfy app</b><small>Android and iPhone.</small></div></li>
+            <li><div><b>Subscribe to a private topic</b><small>Choose a name nobody can guess, for example <code>smartagri-k7x29qd</code>.</small></div></li>
+            <li><div><b>Add the same topic to the controller</b><small>Set <code>NTFY_TOPIC</code> in the sketch and upload it again.</small></div></li></ol>
+          <div class="d-flex gap-2 flex-wrap mt-3"><button class="btn btn-act" data-act="test-push">Send test to phone</button><button class="btn btn-ghost" data-act="test-local">Preview alert here</button></div></div></div>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section class="page" id="p-settings">
+      <div class="cols2">
+        <div class="card"><div class="card-h"><h2>Site</h2></div><div class="card-b">
+          <label class="field-l" for="siteInput">Site name</label><input class="inp sm" id="siteInput" maxlength="30" placeholder="My farm" autocomplete="off">
+          <p class="mut sm mt-2 mb-0">Shown in the header. Saved on this device.</p></div></div>
+        <div class="card"><div class="card-h"><h2>Controller</h2></div><div class="card-b">
+          <p class="mut mt-0" data-t="devLine">Not connected</p>
+          <div class="d-flex gap-2 flex-wrap"><a href="#/welcome" class="btn btn-ghost">Change controller</a><button class="btn btn-danger-o" data-act="forget">Disconnect</button></div></div></div>
+        <div class="card"><div class="card-h"><h2>Calibrate soil sensor</h2></div><div class="card-b">
+          <p class="mut sm mt-0" data-t="calInfo"></p>
+          <ol class="steps"><li><div><b>Sensor in air</b><small>Dry and clear of your hand.</small><button class="btn btn-ghost btn-sm mt-2" data-act="cal-dry">Record dry point</button></div></li>
+            <li><div><b>Sensor in water</b><small>Submerged to the marked line.</small><button class="btn btn-ghost btn-sm mt-2" data-act="cal-wet">Record wet point</button></div></li></ol></div></div>
+        <div class="card"><div class="card-h"><h2>This device</h2></div><div class="card-b">
+          <div class="rowline"><div><b>Appearance</b><span class="d">Light is easiest to read outdoors.</span></div><div class="segc" id="themeSeg"><button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="auto">Auto</button></div></div>
+          <div class="rowline"><div><b>Sound and vibration</b><span class="d">When an alert arrives while the app is open.</span></div><div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" role="switch" id="optSound" aria-label="Sound and vibration"></div></div>
+          <div class="rowline"><div><b>Browser notifications</b><span class="d">Pop-ups while this page is open.</span></div><button class="btn btn-ghost btn-sm" data-act="perm">Allow</button></div></div></div>
+      </div>
+    </section>
+
+    <!-- ============ WELCOME ============ -->
+    <section class="page" id="p-welcome">
+      <div class="wel">
+        <div class="wel-l">
+          <a class="brand" href="#/overview"><span class="logo" data-logo></span><span>SmartAgri<small>Farm controller</small></span></a>
+          <h1>Irrigation and crop monitoring for your farm.</h1>
+          <ul><li><i class="bi bi-activity"></i><div><b>Monitor</b><span>Soil moisture, nutrients, tank level and flow in real time.</span></div></li>
+            <li><i class="bi bi-droplet-half"></i><div><b>Automate</b><span>Irrigate by rules, with built-in pump protection.</span></div></li>
+            <li><i class="bi bi-bell"></i><div><b>Get alerted</b><span>Low nutrients, empty tank or a blocked line.</span></div></li></ul>
+        </div>
+        <div class="wel-r">
+          <h2>Connect to your controller</h2>
+          <p class="mut">Power it on and read the address shown on its display.</p>
+          <label for="ipInput" class="field-l">Controller address</label>
+          <input class="inp" id="ipInput" placeholder="192.168.1.50" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <div class="errmsg" id="ipErr" role="alert"></div>
+          <div class="d-flex gap-2 flex-wrap mt-2 align-items-center"><button class="btn btn-act" id="btnGo">Connect</button><button class="btn btn-ghost" id="btnDemo">View demo</button><a href="#/overview" class="mut ms-1 d-none" id="wCancel">Cancel</a></div>
+          <p class="mut sm mt-4 mb-0">No router nearby? The controller also creates its own Wi-Fi called <b>SmartAgri</b>. Join it and use <code>192.168.4.1</code>.</p>
+          <p class="sm mt-2 mb-0 d-none" id="httpsWarn" style="color:var(--warn)">This page is loaded over https, so the browser blocks the controller. Open the downloaded file instead.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav class="tabbar" id="tabbar" data-nav aria-label="Main"></nav>
+
+<div class="offcanvas offcanvas-bottom sheet" id="sheet" tabindex="-1" aria-labelledby="sheetTitle">
+  <div class="offcanvas-header"><h2 class="offcanvas-title" id="sheetTitle"></h2><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button></div>
+  <div class="offcanvas-body" id="sheetBody"></div>
+</div>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="assets/bootstrap.bundle.min.js"></script>
+<script src="assets/motion.js"></script>
+<script>
+/* =========================================================
+   SmartAgri operations console. Bootstrap + Motion.
+   ========================================================= */
+const HAS = !!window.Motion, { animate } = window.Motion || {};
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function A(t, kf, o = {}) { if (!HAS) return; if (RM) o = { ...o, duration: 0, delay: 0, repeat: 0 }; try { return animate(t, kf, o); } catch (e) { console.warn(e); } }
+
+let host = new URLSearchParams(location.search).get('ip') || localStorage.getItem('agriHost') || '';
+let demo = false, S = null, prev = null, fails = 0, gen = 0, timer = null;
+let hist5 = [], histL = [], lastL = 0, lastSave = 0;
+let dur = +localStorage.getItem('agriDur') || 60, range = localStorage.getItem('agriRange') || '5m', trendKey = 'soil', logF = 'all';
+const DURS = [30, 60, 120, 180];
+
+/* ---------------- static bits ---------------- */
+const LOGO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 21 9.5 3"/><path d="M12 21V3"/><path d="M20 21 14.5 3"/></svg>';
+$$('[data-logo]').forEach(e => e.innerHTML = LOGO);
+const NAV = [['overview', 'Overview', 'bi-grid-1x2-fill'], ['irrigation', 'Irrigation', 'bi-droplet-half'], ['nutrients', 'Nutrients', 'bi-flower2'], ['alerts', 'Alerts', 'bi-bell-fill'], ['settings', 'Settings', 'bi-gear-fill']];
+$$('[data-nav]').forEach(n => n.innerHTML = NAV.map(([id, l, ic]) => `<a class="tab" href="#/${id}" data-nav-id="${id}"><i class="bi ${ic}"></i><span>${l}</span>${id === 'alerts' ? '<span class="bdg d-none" data-badge></span>' : ''}</a>`).join(''));
+const PAGES = ['overview', 'irrigation', 'nutrients', 'alerts', 'settings', 'welcome'];
+const ALIAS = { home: 'overview', water: 'irrigation', food: 'nutrients' };
+const TITLES = { overview: ['Overview', 'Live status of your irrigation and crop sensors.'], irrigation: ['Irrigation', 'Run the pump and set the automatic rules.'], nutrients: ['Nutrients', 'Soil nutrient level and alert settings.'], alerts: ['Alerts', 'Active alerts and the event log.'], settings: ['Settings', 'Site, controller and this device.'], welcome: ['Connect', ''] };
+const siteName = () => localStorage.getItem('agriSite') || 'My farm';
+const fmtDur = s => { s = Math.round(s); return s < 60 ? s + ' s' : Math.floor(s / 60) + ' min' + (s % 60 ? ' ' + (s % 60) + ' s' : ''); };
+const fmtUp = t => t > 86400 ? Math.floor(t / 86400) + ' d' : t > 3600 ? Math.floor(t / 3600) + ' h' : Math.max(1, Math.floor(t / 60)) + ' min';
+const durTxt = s => s < 60 ? s + ' s' : s / 60 + ' min';
+const T2 = n => String(n).padStart(2, '0');
+const fmtT = t => { const d = new Date(t), tm = `${T2(d.getHours())}:${T2(d.getMinutes())}:${T2(d.getSeconds())}`; return d.toDateString() === new Date().toDateString() ? 'Today ' + tm : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ' ' + tm; };
+
+/* ---------------- API (controller or demo) ---------------- */
+async function rawFetch(ip, path) {
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 4500);
+  try { const r = await fetch('http://' + ip + path, { cache: 'no-store', signal: ctl.signal }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status); return j; }
+  catch (e) { if (e.name === 'AbortError' || e instanceof TypeError) throw new Error('unreachable'); throw e; } finally { clearTimeout(to); }
+}
+const api = path => demo ? sim(path) : rawFetch(host, path);
+
+/* ---------------- demo simulator ---------------- */
+const D = { soil: 50, tank: 82, flow: 0, total: 412.4, pump: false, mode: 'auto', fault: '', run: 0, waterLeft: 0, hold: 0, nutrEn: true, nutr: 762, nutrLow: false, nutrSeq: 0, below: 0,
+  cfg: { onBelow: 35, offAbove: 60, minTank: 15, maxRunSec: 300, cooldownSec: 120, minFlow: 0.2, soilDry: 2800, soilWet: 1200, nutrLowPpm: 400, nutrTarget: 1000 } };
+function simTick() {
+  if (D.waterLeft > 0) { D.waterLeft = Math.max(0, D.waterLeft - 2); if (!D.waterLeft) D.pump = false; }
+  if (D.hold > 0) D.hold = Math.max(0, D.hold - 2);
+  if (D.pump) { D.soil = Math.min(100, D.soil + 1.2); D.tank = Math.max(0, D.tank - .35); D.flow = 2.1 + Math.random() * .3; D.total += D.flow * 2 / 60; D.run += 2;
+    if (D.tank < D.cfg.minTank) { D.pump = false; D.waterLeft = 0; D.flow = 0; D.fault = 'TANK LOW'; } }
+  else { D.flow = 0; D.soil = Math.max(0, D.soil - .25); D.run = 0; }
+  if (D.mode === 'auto' && D.waterLeft <= 0 && D.hold <= 0) { if (!D.pump && D.soil < D.cfg.onBelow && D.tank >= D.cfg.minTank) D.pump = true; else if (D.pump && D.soil >= D.cfg.offAbove) D.pump = false; }
+  if (D.nutrEn) { if (D.soil >= 30) { D.nutr = Math.max(0, D.nutr - (D.pump ? 4 : 1.2));
+    if (D.nutr < D.cfg.nutrLowPpm) { D.below++; if (D.below >= 3 && !D.nutrLow) { D.nutrLow = true; D.nutrSeq++; } } else { D.below = 0; if (D.nutr > D.cfg.nutrLowPpm * 1.1) D.nutrLow = false; } } } else D.nutrLow = false;
+}
+function simStatus() {
+  const ppm = Math.round(Math.max(0, D.nutr + (Math.random() - .5) * 4));
+  return { soil: D.soil, soilRaw: Math.round(2800 - D.soil * 16), tank: D.tank, tankRaw: Math.round(D.tank * 22), flow: D.flow, total: D.total, pump: D.pump, mode: D.mode, fault: D.fault, runSec: D.run, cooldownSec: 0, waterLeft: D.waterLeft, hold: D.hold, uptime: 93600, rssi: -52, cfg: { ...D.cfg },
+    nutr: { en: D.nutrEn, ppm, pct: clamp(ppm / D.cfg.nutrTarget * 100), raw: Math.round(ppm * 3.2), low: D.nutrLow, reliable: D.soil >= 30, seq: D.nutrSeq, push: false } };
+}
+function sim(path) {
+  const u = new URL(path, 'http://x'), p = u.searchParams, no = m => Promise.reject(new Error(m));
+  switch (u.pathname) {
+    case '/api/pump': if (p.get('state') === 'off') { D.pump = false; D.waterLeft = 0; if (D.mode === 'auto') D.hold = 600; } else { if (D.mode === 'auto') return no('Switch to manual mode first'); D.pump = true; } break;
+    case '/api/water': if (D.tank < D.cfg.minTank) { D.fault = 'TANK LOW'; return no('TANK LOW'); } D.fault = ''; D.pump = true; D.waterLeft = +p.get('sec') || 60; D.hold = 0; break;
+    case '/api/resume': D.hold = 0; break;
+    case '/api/mode': D.mode = p.get('mode'); if (D.mode === 'manual') { D.pump = false; D.waterLeft = 0; } break;
+    case '/api/config': for (const [k, v] of p) { if (k === 'nutrEnabled') D.nutrEn = v === '1'; else D.cfg[k] = parseFloat(v); } break;
+    case '/api/clear': D.fault = ''; D.hold = 0; break;
+    case '/api/resetflow': D.total = 0; break;
+    case '/api/testalert': return Promise.resolve({ ok: false, configured: false });
+    case '/api/demo': { const x = p.get('x'); if (x === 'drain') { D.nutrEn = true; D.soil = Math.max(D.soil, 45); D.nutr = D.cfg.nutrLowPpm * .72; } if (x === 'feed') D.nutr = D.cfg.nutrTarget * .9; if (x === 'dry') D.soil = 20; } break;
+  }
+  return Promise.resolve(simStatus());
+}
+function seedDemo() {
+  const now = Date.now(); histL = [];
+  for (let i = 0; i < 5760; i++) { const t = now - (5759 - i) * 15000, x = ((i * 15 + 4200) % 10800) / 10800;
+    histL.push({ t, soil: 58 - 20 * x + Math.sin(i / 9) * .6, food: 762 + (5759 - i) * .024 + Math.sin(i / 7) * 5, tank: 82 + (5759 - i) / 5760 * 14 - x * 3, flow: x > .975 ? 2.2 : 0 }); }
+  hist5 = histL.slice(-20).map((p, i) => ({ ...p, t: now - (20 - i) * 14000 }));
+  const n = JSON.parse(localStorage.getItem('agriNotes') || '[]'); if (!n.length) { const h = 3600e3;
+    notes = [{ t: now - 2 * h, lvl: 'info', title: 'Irrigation finished', text: 'Soil moisture is now 60%.' }, { t: now - 2.3 * h, lvl: 'info', title: 'Irrigation started', text: 'Soil moisture was 34%.' }, { t: now - 9 * h, lvl: 'warn', title: 'Nutrient level low', text: 'Reading was 388 ppm. Fertiliser applied.' }].map((x, i) => ({ id: i, read: true, kind: 'info', ...x })); saveNotes(); }
+}
+function loadHist() { try { histL = JSON.parse(localStorage.getItem('agriHistL:' + host) || '[]').map(a => ({ t: a[0], soil: a[1], food: a[2], tank: a[3], flow: a[4] })); } catch { histL = []; } }
+function saveHist() { try { localStorage.setItem('agriHistL:' + host, JSON.stringify(histL.map(p => [p.t, +p.soil.toFixed(1), p.food == null ? null : Math.round(p.food), +p.tank.toFixed(1), +p.flow.toFixed(2)]))); } catch { } }
+function pushHist(s) {
+  const n = s.nutr || {}, now = Date.now(), p = { t: now, soil: s.soil, food: n.en && n.reliable ? n.ppm : null, tank: s.tank, flow: s.flow };
+  hist5.push(p); while (hist5.length && hist5[0].t < now - 305000) hist5.shift();
+  if (now - lastL >= 15000) { lastL = now; histL.push(p); while (histL.length && histL[0].t < now - 86400e3) histL.shift(); }
+  if (!demo && now - lastSave > 60000) { lastSave = now; saveHist(); }
+}
+
+/* ---------------- polling ---------------- */
+const connected = () => demo || !!host;
+function startPolling() {
+  gen++; clearTimeout(timer); fails = 0; prev = null; hist5 = []; histL = []; lastL = 0; lastSave = Date.now();
+  if (demo) { localStorage.removeItem('agriSeq:demo'); seedDemo(); } else loadHist();
+  $$('.page').forEach(p => p.dataset.ready = ''); poll(gen);
+}
+async function poll(g) {
+  if (g !== gen) return;
+  try { if (demo) simTick(); const s = await api('/api/status'); if (g !== gen) return; fails = 0; S = s; setStatus(true); render(s); detect(s); pushHist(s); prev = s; drawAll(); }
+  catch (e) { if (g === gen && ++fails >= 2) setStatus(false); }
+  if (g === gen) timer = setTimeout(() => poll(g), 2000);
+}
+function setStatus(ok) {
+  const st = demo ? 'demo' : ok ? 'live' : 'off', txt = demo ? 'Demo' : ok ? 'Connected' : 'Offline';
+  $$('[data-status]').forEach(e => { e.dataset.s = st; e.querySelector('.stxt').textContent = txt; });
+  $('offBar').classList.toggle('on', !ok && !demo && connected() && currentRoute() !== 'welcome'); $('demoBox').classList.toggle('on', demo);
+  if (!ok && !demo) setBanner({ sev: 'crit', ic: 'bi-wifi-off', t: 'Controller offline', d: "The app can't reach your controller right now.", acts: [['go:welcome', 'Change connection']] });
+}
+
+/* ---------------- routing ---------------- */
+const currentRoute = () => { let r = location.hash.replace(/^#\/?/, '') || 'overview'; r = ALIAS[r] || r; return PAGES.includes(r) ? r : 'overview'; };
+function route() {
+  const r = currentRoute();
+  if (!connected() && r !== 'welcome') { location.replace('#/welcome'); return; }
+  $$('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + r)); document.body.dataset.view = r;
+  $$('[data-nav-id]').forEach(a => a.classList.toggle('on', a.dataset.navId === r));
+  $('pTitle').textContent = TITLES[r][0]; $('pSub').textContent = TITLES[r][1]; document.title = TITLES[r][0] + ' · SmartAgri';
+  $('wCancel').classList.toggle('d-none', !connected());
+  if (r === 'alerts') { renderLog(); setTimeout(markRead, 1500); }
+  scrollTo(0, 0); A('#p-' + r, { opacity: [0, 1], y: [8, 0] }, { duration: .22, ease: 'easeOut' });
+  $('offBar').classList.toggle('on', fails >= 2 && !demo && connected() && r !== 'welcome'); drawAll();
+}
+addEventListener('hashchange', route);
+
+/* ---------------- toast ---------------- */
+function toast(title, text, kind = 'ok') {
+  const el = document.createElement('div'), ic = { ok: 'bi-check-circle-fill', warn: 'bi-exclamation-triangle-fill', bad: 'bi-x-octagon-fill', info: 'bi-info-circle-fill' }[kind];
+  el.className = 'toast-i ' + kind; el.innerHTML = `<i class="bi ${ic}"></i><span><b>${esc(title)}</b>${text ? `<small>${esc(text)}</small>` : ''}</span>`; $('toasts').appendChild(el);
+  A(el, { opacity: [0, 1], y: [16, 0] }, { duration: .22, ease: 'easeOut' });
+  const kill = () => { const a = A(el, { opacity: 0 }, { duration: .18 }); (a && a.finished ? a.finished : Promise.resolve()).then(() => el.remove()); };
+  el.onclick = kill; setTimeout(kill, kind === 'warn' || kind === 'bad' ? 7000 : 3200);
+}
+
+/* ---------------- alerts model ---------------- */
+function alertsOf(s) {
+  const c = s.cfg, n = s.nutr || {}, L = [];
+  if (s.fault === 'NO FLOW') L.push({ sev: 'crit', ic: 'bi-exclamation-octagon-fill', t: 'No flow detected. Pump stopped', d: 'Check the tank, hose and flow sensor, then clear the fault.', acts: [['clear', 'Clear fault', 1]] });
+  if (s.tank < c.minTank) L.push({ sev: 'crit', ic: 'bi-exclamation-octagon-fill', t: 'Tank level critical', d: `Tank is at ${Math.round(s.tank)}%. Irrigation is paused below ${c.minTank}%. Refill the tank.`, acts: [['go:irrigation', 'Tank settings']] });
+  if (s.fault === 'MAX RUN' || s.cooldownSec > 0) L.push({ sev: 'warn', ic: 'bi-exclamation-triangle-fill', t: 'Pump resting', d: 'The pump reached its longest run time and will restart after a rest.', acts: [] });
+  if (n.en && n.low) L.push({ sev: 'warn', ic: 'bi-exclamation-triangle-fill', t: 'Nutrient level low', d: `${n.ppm} ppm, below the ${c.nutrLowPpm} ppm limit. Apply fertiliser and recheck in about an hour.`, acts: [['go:nutrients', 'View details']] });
+  if (s.soil < c.onBelow) L.push({ sev: 'warn', ic: 'bi-exclamation-triangle-fill', t: 'Soil moisture below range', d: s.mode === 'auto' ? (s.hold ? `${Math.round(s.soil)}%. Automatic irrigation is paused. Start irrigation or resume.` : `${Math.round(s.soil)}% is below the ${c.onBelow}% start level. Irrigation starts automatically.`) : `${Math.round(s.soil)}% is below the ${c.onBelow}% start level. Automatic irrigation is off.`, acts: [['run', 'Start irrigation', 1]] });
+  return L;
+}
+function statusOf(s) {
+  const A_ = alertsOf(s), crit = A_.find(a => a.sev === 'crit'), c = s.cfg, n = s.nutr || {};
+  if (crit) return crit;
+  if (s.pump) return { sev: 'info', ic: 'bi-droplet-fill', t: 'Irrigation running', d: s.waterLeft ? `${fmtDur(s.waterLeft)} remaining.` : `Running for ${fmtDur(s.runSec)}. Stops at ${c.offAbove}% soil moisture.`, acts: [['stop', 'Stop', 0]] };
+  if (A_.length > 1) return { sev: 'warn', ic: 'bi-exclamation-triangle-fill', t: `${A_.length} items need attention`, d: A_.map(a => a.t.toLowerCase()).join(', ') + '.', acts: [['go:alerts', 'View alerts']] };
+  if (A_.length) return A_[0];
+  return { sev: 'ok', ic: 'bi-check-circle-fill', t: 'All systems normal', d: `Soil moisture ${Math.round(s.soil)}%, tank ${Math.round(s.tank)}%${n.en ? `, nutrients ${n.ppm} ppm` : ''}. Automatic irrigation is ${s.mode === 'auto' ? 'on' : 'off'}.`, acts: [] };
+}
+let bnKey = '';
+function setBanner(b) {
+  const k = JSON.stringify(b); if (k === bnKey) return; bnKey = k;
+  $('banner').dataset.sev = b.sev; $('bnIc').className = 'bi ' + b.ic; $('bnT').textContent = b.t; $('bnD').textContent = b.d;
+  $('bnA').innerHTML = (b.acts || []).map(([a, l, p]) => `<button class="btn btn-sm ${a === 'stop' ? 'btn-stop' : p ? 'btn-act' : 'btn-ghost'}" data-act="${a}">${l}</button>`).join('');
+}
+
+/* ---------------- control markup (shared) ---------------- */
+const ctlHTML = () => `
+  <div class="ctl-top"><div><div class="ctl-state" data-t="ctlState">Idle</div><div class="mut sm" data-t="ctlSub"></div></div><span class="tag" data-t="ctlTag" data-ctltag>Idle</span></div>
+  <div class="progress-l"><i data-prog></i></div>
+  <div class="field-l">Run time</div>
+  <div class="segc full seg-dur mb-3" role="group" aria-label="Run time">${DURS.map(s => `<button data-d="${s}">${durTxt(s)}</button>`).join('')}</div>
+  <button class="btn btn-act w-100" data-run-btn><i class="bi bi-play-fill"></i><span>Start irrigation</span></button>
+  <div class="rowline mt-3"><div><b>Automatic irrigation</b><span class="d" data-t="autoNote"></span></div><div class="form-check form-switch m-0"><input class="form-check-input sw-auto" type="checkbox" role="switch" aria-label="Automatic irrigation"></div></div>
+  <div class="hold d-none" data-hold><span data-t="holdTxt"></span><button class="btn btn-ghost btn-sm" data-act="resume">Resume</button></div>`;
+$$('[data-ctl]').forEach(e => e.innerHTML = ctlHTML());
+
+/* ---------------- render ---------------- */
+const SEVNAME = { ok: 'ok', warn: 'warn', crit: 'crit', info: 'info', idle: 'idle' };
+function bind(V) { $$('[data-t]').forEach(e => { const v = V[e.dataset.t]; if (v !== undefined && e.textContent !== String(v)) e.textContent = v; }); }
+function sev(id, v) { const e = $(id); if (e) e.dataset.sev = v; }
+function render(s) {
+  const c = s.cfg, n = s.nutr || { en: false }, auto = s.mode === 'auto', run = s.pump, total = s.waterLeft + s.runSec;
+  const soilS = s.soil < c.onBelow ? ['warn', 'Below range'] : s.soil >= c.offAbove ? ['info', 'Wet'] : ['ok', 'In range'];
+  const foodS = !n.en ? ['idle', 'Not enabled'] : n.low ? ['warn', 'Low'] : !n.reliable ? ['idle', 'On hold'] : n.ppm < c.nutrLowPpm * 1.5 ? ['warn', 'Falling'] : ['ok', 'Normal'];
+  const tl = s.tank < c.minTank, tankS = tl ? ['crit', 'Critical'] : s.tank < 35 ? ['warn', 'Low'] : ['ok', 'Normal'];
+  const flowS = s.flow > .05 ? ['info', 'Flowing'] : ['idle', 'Idle'];
+  const V = {
+    site: siteName(), devShort: demo ? 'Demo data' : host || 'Not connected',
+    soilV: Math.round(s.soil), soilChip: soilS[1], foodV: n.en ? n.ppm : '—', foodU: n.en ? 'ppm' : '', foodChip: foodS[1],
+    tankV: Math.round(s.tank), tankChip: tankS[1], flowV: s.flow.toFixed(1), flowChip: flowS[1], usedV: s.total.toFixed(1), usedChip: 'Total',
+    pumpWord: run ? 'Running' : 'Off', pumpChip: auto ? 'Automatic' : 'Manual', flowNote: run ? 'Irrigating' : 'Idle',
+    ctlState: run ? 'Irrigating' : s.cooldownSec ? 'Resting' : 'Idle', ctlTag: run ? 'Running' : auto ? 'Automatic' : 'Manual',
+    ctlSub: run ? (s.waterLeft ? `${fmtDur(s.waterLeft)} remaining` : `Running for ${fmtDur(s.runSec)}`) : s.cooldownSec ? `Rest ends in ${fmtDur(s.cooldownSec)}` : auto ? `Starts below ${c.onBelow}%, stops at ${c.offAbove}%` : 'Automatic irrigation is off',
+    autoNote: auto ? `Starts below ${c.onBelow}%, stops at ${c.offAbove}%.` : 'Off. The pump runs only when you start it.',
+    holdTxt: `Automatic irrigation paused for ${Math.ceil(s.hold / 60)} min because the pump was stopped.`,
+    tankNote: tl ? `Critical. Refill before irrigating.` : `Irrigation pauses below ${c.minTank}%.`,
+    foodVerdict: !n.en ? '' : n.low ? 'Low. Apply fertiliser.' : !n.reliable ? 'On hold until the soil is moist.' : n.ppm < c.nutrLowPpm * 1.5 ? 'Normal, but falling.' : n.ppm > c.nutrTarget ? 'High. Plenty of fertiliser present.' : 'Normal. Crop is well fed.',
+    foodNote: n.reliable ? `You'll be alerted below ${c.nutrLowPpm} ppm.` : 'Readings count only while soil moisture is at least 30%.',
+    devLine: demo ? 'You are viewing demo data.' : `Connected to ${host}. Signal ${s.rssi} dBm. Online for ${fmtUp(s.uptime)}.`,
+    calInfo: `Dry reads ${c.soilDry}, wet reads ${c.soilWet}. The sensor reads ${s.soilRaw} now.`,
+    pushTitle: n.push ? 'Phone alerts are on' : 'Phone alerts', pushHelp: n.push ? 'The controller sends alerts to your phone even when this app is closed.' : 'Receive alerts on your phone even when this app is closed.'
+  };
+  bind(V); sev('kSoil', soilS[0]); sev('kFood', foodS[0]); sev('kTank', tankS[0]); sev('kFlow', flowS[0]); sev('kUsed', 'idle'); sev('kPump', run ? 'info' : 'idle');
+  $$('[data-fill=tank]').forEach(e => e.style.width = clamp(s.tank) + '%'); $$('[data-fill=soil]').forEach(e => e.style.width = clamp(s.soil) + '%'); $$('[data-fill=flow]').forEach(e => e.style.width = clamp(s.flow / 4 * 100) + '%');
+  $$('[data-tankbar]').forEach(e => { e.classList.toggle('low', tl); e.firstElementChild.style.width = clamp(s.tank) + '%'; });
+  $('flow').classList.toggle('run', run);
+  setBanner(statusOf(s));
+  // control widgets (all instances)
+  $$('[data-ctltag]').forEach(e => e.dataset.sev = run ? 'info' : '');
+  $$('[data-prog]').forEach(e => e.style.width = run && s.waterLeft ? (100 * (1 - s.waterLeft / Math.max(1, total))).toFixed(0) + '%' : run ? '100%' : '0%');
+  $$('[data-run-btn]').forEach(b => { b.className = 'btn w-100 ' + (run ? 'btn-stop' : 'btn-act'); b.innerHTML = run ? '<i class="bi bi-stop-fill"></i><span>Stop irrigation</span>' : '<i class="bi bi-play-fill"></i><span>Start irrigation</span>'; });
+  $$('.sw-auto').forEach(e => e.checked = auto); $$('[data-hold]').forEach(e => e.classList.toggle('d-none', !(s.hold > 0 && auto)));
+  markSegs();
+  // active alerts
+  const AL = alertsOf(s);
+  $('activeAlerts').innerHTML = AL.length ? AL.map(a => `<div class="al" data-sev="${a.sev}"><i class="bi ${a.ic}"></i><div><b>${esc(a.t)}</b><span>${esc(a.d)}</span></div></div>`).join('') : '<div class="empty"><i class="bi bi-check-circle"></i>No active alerts</div>';
+  // nutrients page
+  $('foodSetup').classList.toggle('d-none', !!n.en); $('foodMain').classList.toggle('d-none', !n.en); $('nutrSwitch').checked = !!n.en;
+  const ft = $$('[data-tagsev=food]')[0]; if (ft) ft.dataset.sev = foodS[0] === 'warn' ? 'warn' : foodS[0] === 'ok' ? 'ok' : '';
+  if (n.en) { const lo = c.nutrLowPpm, tg = c.nutrTarget, max = Math.max(tg * 1.4, n.ppm * 1.08, lo * 2.2);
+    $('mzLow').style.flex = `0 0 ${lo / max * 100}%`; $('mzOk').style.flex = `0 0 ${(tg - lo) / max * 100}%`; $('mzRich').style.flex = '1 1 0'; $('mk').style.left = clamp(n.ppm / max * 100) + '%'; $('mk').dataset.v = n.ppm + ' ppm';
+    if (n.low && !$('tipsBox').dataset.o) { $('tipsBox').open = true; $('tipsBox').dataset.o = 1; } if (!n.low) delete $('tipsBox').dataset.o; }
+  $('pushSteps').classList.toggle('d-none', !!n.push);
+  $('updated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  renderSteppers(c); renderLog(); fillSheet(false);
+  document.title = (AL.some(a => a.sev !== 'info') ? '⚠ ' : '') + TITLES[currentRoute()][0] + ' · SmartAgri';
+}
+function markSegs() { $$('.seg-dur button').forEach(b => b.classList.toggle('on', +b.dataset.d === dur)); $$('.seg-range button').forEach(b => b.classList.toggle('on', b.dataset.r === range)); $$('#trendTabs button').forEach(b => b.classList.toggle('on', b.dataset.k === trendKey)); }
+
+/* ---------------- steppers ---------------- */
+const pend = {};
+const fmtStep = (v, st) => +st.dataset.step < 1 ? v.toFixed(1) : Math.round(v);
+function renderSteppers(c) { $$('.stepper').forEach(st => { const k = st.dataset.key; if (pend[k] || c[k] == null) return; const sc = +st.dataset.scale || 1; st.querySelector('output').innerHTML = `${fmtStep(c[k] / sc, st)}<small>${st.dataset.unit}</small>`; }); }
+function stepClick(btn) {
+  const st = btn.closest('.stepper'), k = st.dataset.key, sc = +st.dataset.scale || 1, step = +st.dataset.step, min = +st.dataset.min, max = +st.dataset.max;
+  const cur = pend[k] ? pend[k].v : S.cfg[k] / sc, v = clamp(Math.round((cur + step * (+btn.dataset.d)) * 100) / 100, min, max);
+  clearTimeout(pend[k] && pend[k].tm);
+  pend[k] = { v, tm: setTimeout(async () => { const r = await act(`/api/config?${k}=${Math.round(v * sc * 100) / 100}`); delete pend[k]; if (r) toast('Saved'); renderSteppers(S.cfg); }, 650) };
+  $$(`.stepper[data-key=${k}] output`).forEach(o => o.innerHTML = `${fmtStep(v, st)}<small>${st.dataset.unit}</small>`);
+}
+
+/* ---------------- actions ---------------- */
+const FRIENDLY = { 'TANK LOW': 'The tank is too low to irrigate. Refill it first.', 'COOLDOWN': 'The pump is resting. Try again shortly.', 'NO FLOW': 'No water flow was detected. Check the tank and line.', 'unreachable': "Can't reach the controller right now." };
+async function act(path, ok) {
+  try { const r = await api(path); if (r && r.soil !== undefined) { S = r; render(r); } else if (path !== '/api/testalert') { try { S = await api('/api/status'); render(S); } catch { } } if (ok) toast(ok); return r || true; }
+  catch (e) { toast("Couldn't complete that", FRIENDLY[e.message] || e.message, 'bad'); return null; }
+}
+async function runToggle() { if (S && S.pump) return act('/api/pump?state=off', 'Irrigation stopped'); const r = await act('/api/water?sec=' + dur); if (r) toast('Irrigation started', `The pump stops after ${durTxt(dur)}.`); }
+document.addEventListener('click', async e => {
+  const st = e.target.closest('.stepper button'); if (st && S) return stepClick(st);
+  const sh = e.target.closest('[data-sheet]'); if (sh) { e.preventDefault(); return openSheet(sh.dataset.sheet); }
+  const d = e.target.closest('[data-demo]'); if (d) return act('/api/demo?x=' + d.dataset.demo);
+  if (e.target.closest('[data-run-btn]')) return runToggle();
+  const sd = e.target.closest('.seg-dur button'); if (sd) { dur = +sd.dataset.d; localStorage.setItem('agriDur', dur); return markSegs(); }
+  const sr = e.target.closest('.seg-range button'); if (sr) { range = sr.dataset.r; localStorage.setItem('agriRange', range); markSegs(); return drawAll(); }
+  const tt = e.target.closest('#trendTabs button'); if (tt) { trendKey = tt.dataset.k; $('chTrend').dataset.chart = trendKey; markSegs(); return drawAll(); }
+  const lf = e.target.closest('#logFilter button'); if (lf) { logF = lf.dataset.f; $$('#logFilter button').forEach(b => b.classList.toggle('on', b === lf)); return renderLog(); }
+  const a = e.target.closest('[data-act]'); if (!a) return; const x = a.dataset.act;
+  if (x === 'run') runToggle(); else if (x === 'stop') act('/api/pump?state=off', 'Irrigation stopped');
+  else if (x === 'clear') act('/api/clear', 'Fault cleared'); else if (x === 'resume') act('/api/resume', 'Automatic irrigation resumed');
+  else if (x.startsWith('go:')) location.hash = '#/' + x.slice(3);
+  else if (x === 'food-on') act('/api/config?nutrEnabled=1', 'Nutrient monitoring is on');
+  else if (x === 'reset-flow') { if (confirm('Reset the water used total to 0?')) act('/api/resetflow', 'Total reset'); }
+  else if (x === 'cal-dry') { if (confirm('Is the sensor dry and in the air?')) act('/api/calibrate?point=dry', 'Dry point recorded'); }
+  else if (x === 'cal-wet') { if (confirm('Is the sensor in water up to the line?')) act('/api/calibrate?point=wet', 'Wet point recorded'); }
+  else if (x === 'perm') permit(); else if (x === 'test-local') raise('warn', 'Nutrient level low', 'This is how a low nutrient alert appears.', 'warn');
+  else if (x === 'test-push') { const r = await act('/api/testalert'); if (!r || r === true) return; if (!r.configured) toast('Phone alerts not set up', 'Follow the three steps on this page first.', 'info'); else toast(r.ok ? 'Test sent' : "Couldn't send", r.ok ? 'Check your phone.' : 'The controller needs internet to reach ntfy.', r.ok ? 'ok' : 'bad'); }
+  else if (x === 'forget') { if (confirm('Disconnect from this controller?')) { gen++; clearTimeout(timer); host = ''; demo = false; S = null; localStorage.removeItem('agriHost'); $('ipInput').value = ''; location.hash = '#/welcome'; } }
+});
+document.addEventListener('change', e => {
+  if (e.target.classList.contains('sw-auto')) act('/api/mode?mode=' + (e.target.checked ? 'auto' : 'manual'), e.target.checked ? 'Automatic irrigation on' : 'Automatic irrigation off');
+  if (e.target.id === 'nutrSwitch') act('/api/config?nutrEnabled=' + (e.target.checked ? 1 : 0), e.target.checked ? 'Nutrient monitoring on' : 'Nutrient monitoring off');
+});
+$('siteInput').value = localStorage.getItem('agriSite') || ''; $('siteInput').addEventListener('input', e => { localStorage.setItem('agriSite', e.target.value.trim()); if (S) render(S); });
+document.addEventListener('pointerdown', e => { const b = e.target.closest('.btn,.segc button,.kpi,.node'); if (b && !b.disabled) A(b, { scale: .97 }, { duration: .07 }); });
+['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => document.addEventListener(ev, e => { const b = e.target.closest && e.target.closest('.btn,.segc button,.kpi,.node'); if (b) A(b, { scale: 1 }, { duration: .14 }); }, true));
+
+/* ---------------- event log ---------------- */
+let notes = []; try { notes = JSON.parse(localStorage.getItem('agriNotes') || '[]'); } catch { }
+const saveNotes = () => localStorage.setItem('agriNotes', JSON.stringify(notes.slice(0, 100)));
+const LVL = { crit: 'Critical', warn: 'Warning', info: 'Info' };
+function addNote(lvl, title, text) { notes.unshift({ id: Date.now() + Math.random(), t: Date.now(), lvl, title, text, read: false }); notes = notes.slice(0, 100); saveNotes(); renderLog(); }
+const logRow = n => `<div class="lr ${n.read ? '' : 'unread'}"><span class="lv" data-l="${n.lvl}">${LVL[n.lvl] || 'Info'}</span><span class="lt">${fmtT(n.t)}</span><div class="le"><b>${esc(n.title)}</b><span>${esc(n.text)}</span></div></div>`;
+const EMPTYLOG = '<div class="empty"><i class="bi bi-journal-check"></i>No events yet</div>';
+function renderLog() {
+  const unread = notes.filter(n => !n.read).length; $$('[data-badge]').forEach(b => { b.textContent = unread; b.classList.toggle('d-none', !unread); });
+  $('homeLog').innerHTML = notes.length ? notes.slice(0, 6).map(logRow).join('') : EMPTYLOG;
+  const list = notes.filter(n => logF === 'all' || n.lvl === logF); $('alertsList').innerHTML = list.length ? list.map(logRow).join('') : EMPTYLOG;
+}
+function markRead() { if (currentRoute() === 'alerts') { notes.forEach(n => n.read = true); saveNotes(); renderLog(); } }
+$('notesRead').onclick = markRead; $('notesClear').onclick = () => { notes = []; saveNotes(); renderLog(); };
+let ac;
+function beep() {
+  if (!$('optSound').checked) return; try { navigator.vibrate && navigator.vibrate([180, 90, 180]); } catch { }
+  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); [660, 880].forEach((f, i) => { const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + i * .18; o.type = 'sine'; o.frequency.value = f; o.connect(g); g.connect(ac.destination);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.15, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + .16); o.start(t); o.stop(t + .18); }); } catch { }
+}
+const sysNotify = (t, b) => { try { if ('Notification' in window && Notification.permission === 'granted') new Notification(t, { body: b }); } catch { } };
+function raise(lvl, title, text, tk) { addNote(lvl, title, text); toast(title, text, tk); A('[data-nav-id=alerts] i', { rotate: [0, -16, 14, -8, 0] }, { duration: .6 }); beep(); sysNotify(title, text); }
+async function permit() { if (!('Notification' in window)) return toast('Not supported here', 'Use phone alerts on the Alerts page instead.', 'info'); const p = await Notification.requestPermission(); toast(p === 'granted' ? 'Browser notifications on' : 'Not allowed', p === 'granted' ? '' : 'You can allow them in browser settings.', p === 'granted' ? 'ok' : 'info'); }
+function detect(s) {
+  const n = s.nutr || {}, pn = prev && prev.nutr || {}, key = 'agriSeq:' + (demo ? 'demo' : host), stored = localStorage.getItem(key);
+  if (n.en && n.low) { const fresh = prev ? (!pn.low || n.seq !== pn.seq) : String(n.seq) !== stored; if (fresh) raise('warn', 'Nutrient level low', `${n.ppm} ppm, below the ${s.cfg.nutrLowPpm} ppm limit. Apply fertiliser and recheck in about an hour.`, 'warn'); }
+  else if (prev && pn.low && !n.low && n.en) { addNote('info', 'Nutrient level back to normal', `Now ${n.ppm} ppm.`); toast('Nutrients back to normal', `Now ${n.ppm} ppm`, 'ok'); }
+  localStorage.setItem(key, String(n.seq ?? 0));
+  if (s.fault && (!prev || s.fault !== prev.fault) && ['TANK LOW', 'NO FLOW', 'MAX RUN'].includes(s.fault)) {
+    const lv = s.fault === 'MAX RUN' ? 'warn' : 'crit';
+    raise(lv, { 'TANK LOW': 'Tank level critical', 'NO FLOW': 'No flow detected. Pump stopped', 'MAX RUN': 'Pump resting' }[s.fault], { 'TANK LOW': 'Irrigation is paused. Refill the tank.', 'NO FLOW': 'The pump was stopped to protect it. Check the tank, line and flow sensor.', 'MAX RUN': 'Longest run time reached. It restarts after a rest.' }[s.fault], lv === 'crit' ? 'bad' : 'warn'); }
+  if (prev && !prev.pump && s.pump && !s.waterLeft) addNote('info', 'Irrigation started', `Soil moisture was ${Math.round(s.soil)}%.`);
+  if (prev && prev.pump && !s.pump && !s.fault) addNote('info', 'Irrigation finished', `Soil moisture is now ${Math.round(s.soil)}%.`);
+}
+
+/* ---------------- charts ---------------- */
+const RW = { '5m': 300e3, '1h': 3600e3, '24h': 86400e3 };
+const CH = {
+  soil: (c, pts) => ({ color: '--c-soil', max: 100, unit: '%', lines: [{ v: c.onBelow, l: 'Start' }, { v: c.offAbove, l: 'Stop' }] }),
+  food: (c, pts) => ({ color: '--c-food', max: Math.max(c.nutrTarget * 1.2, ...pts.map(p => p.food || 0)), unit: ' ppm', lines: [{ v: c.nutrLowPpm, l: 'Alert' }] }),
+  tank: (c, pts) => ({ color: '--c-tank', max: 100, unit: '%', lines: [{ v: c.minTank, l: 'Pause' }] }),
+  flow: (c, pts) => ({ color: '--c-flow', max: Math.max(3, ...pts.map(p => p.flow || 0)) * 1.1, unit: ' L/min', lines: [] })
+};
+function getPts(r) { const now = Date.now(); return r === '5m' ? hist5 : histL.filter(p => p.t > now - RW[r]); }
+const niceMax = m => { const p = Math.pow(10, Math.floor(Math.log10(m))), f = m / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; };
+function drawChart(cv) {
+  if (!cv.offsetParent || !S) return; const key = cv.dataset.chart, pts = getPts(range).filter(p => p[key] != null), cfg = CH[key](S.cfg, pts); cfg.max = key === 'soil' || key === 'tank' ? 100 : niceMax(cfg.max);
+  const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight; cv.width = w * dpr; cv.height = h * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr); g.clearRect(0, 0, w, h);
+  const css = getComputedStyle(document.body), col = n => css.getPropertyValue(n).trim(), color = col(cfg.color), mut = col('--mut'), line = col('--line2');
+  const L = 38, R = 6, T0 = 8, B = 22, pw = w - L - R, ph = h - T0 - B, now = Date.now(), Wd = RW[range], X = t => L + (1 - (now - t) / Wd) * pw, Y = v => T0 + ph - clamp(v, 0, cfg.max) / cfg.max * ph;
+  g.font = '500 11px "Public Sans",system-ui'; g.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) { const v = cfg.max * i / 4, y = Math.round(Y(v)) + .5; g.strokeStyle = line; g.beginPath(); g.moveTo(L, y); g.lineTo(w - R, y); g.stroke(); g.fillStyle = mut; g.textAlign = 'right'; g.fillText(Math.round(v * 10) / 10, L - 6, y + 4); }
+  const NT = w < 460 ? 2 : 4; g.textAlign = 'center'; for (let i = 0; i <= NT; i++) { const t = now - Wd * (1 - i / NT), x = L + pw * i / NT; g.fillStyle = mut; g.textAlign = i === 0 ? 'left' : i === NT ? 'right' : 'center';
+    g.fillText(i === NT ? 'now' : range === '5m' ? Math.round((now - t) / 60000) + ' min ago' : new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), i === 0 ? L : x, h - 6); }
+  cfg.lines.forEach(l => { const y = Y(l.v); g.setLineDash([5, 4]); g.strokeStyle = mut; g.globalAlpha = .8; g.beginPath(); g.moveTo(L, y); g.lineTo(w - R, y); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; g.fillStyle = mut; g.textAlign = 'right'; g.fillText(`${l.l} ${l.v}${cfg.unit.trim()}`, w - R - 2, y - 4); });
+  if (pts.length > 1) {
+    g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(X(p.t), Y(p[key])) : g.moveTo(X(p.t), Y(p[key]))); g.strokeStyle = color; g.lineWidth = 2; g.lineJoin = 'round'; g.stroke();
+    g.lineTo(X(pts[pts.length - 1].t), T0 + ph); g.lineTo(X(pts[0].t), T0 + ph); g.closePath(); const gr = g.createLinearGradient(0, T0, 0, T0 + ph); gr.addColorStop(0, color + '33'); gr.addColorStop(1, color + '00'); g.fillStyle = gr; g.fill();
+  } else { g.fillStyle = mut; g.textAlign = 'center'; g.fillText('Collecting readings. Data builds up while the app is open.', L + pw / 2, T0 + ph / 2); }
+  if (cv._hx != null && pts.length > 1) { let best = pts[0], bd = 1e9; pts.forEach(p => { const d = Math.abs(X(p.t) - cv._hx); if (d < bd) { bd = d; best = p; } });
+    const x = X(best.t), y = Y(best[key]); g.strokeStyle = mut; g.beginPath(); g.moveTo(x, T0); g.lineTo(x, T0 + ph); g.stroke(); g.fillStyle = color; g.beginPath(); g.arc(x, y, 4, 0, 7); g.fill();
+    const tx = `${(Math.round(best[key] * 10) / 10)}${cfg.unit}  ${new Date(best.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: range === '5m' ? '2-digit' : undefined })}`, bw = g.measureText(tx).width + 16, bx = x + 10 + bw > w ? x - bw - 10 : x + 10;
+    g.fillStyle = col('--ink'); g.beginPath(); g.roundRect ? g.roundRect(bx, T0 + 4, bw, 24, 6) : g.rect(bx, T0 + 4, bw, 24); g.fill(); g.fillStyle = col('--surf'); g.textAlign = 'left'; g.fillText(tx, bx + 8, T0 + 20); }
+  if (!cv._hb) { cv._hb = 1; cv.addEventListener('pointermove', e => { cv._hx = e.clientX - cv.getBoundingClientRect().left; drawChart(cv); }); cv.addEventListener('pointerleave', () => { cv._hx = null; drawChart(cv); }); }
+}
+function drawSpark(cv) {
+  if (!cv.offsetParent) return; const key = cv.dataset.spark, pts = hist5.filter(p => p[key] != null), dpr = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight; cv.width = w * dpr; cv.height = h * dpr;
+  const g = cv.getContext('2d'); g.scale(dpr, dpr); g.clearRect(0, 0, w, h); if (pts.length < 2) return;
+  const css = getComputedStyle(document.body), color = css.getPropertyValue({ soil: '--c-soil', food: '--c-food', tank: '--c-tank', flow: '--c-flow' }[key]).trim();
+  const vs = pts.map(p => p[key]), lo = Math.min(...vs), hi = Math.max(...vs), span = Math.max(hi - lo, key === 'flow' ? 1 : key === 'food' ? 40 : 6), now = Date.now();
+  g.beginPath(); pts.forEach((p, i) => { const x = (1 - (now - p.t) / 300e3) * (w - 2) + 1, y = h - 3 - (p[key] - lo) / span * (h - 6); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.strokeStyle = color; g.lineWidth = 1.8; g.lineJoin = 'round'; g.stroke();
+}
+function drawAll() { if (!S) return; $$('canvas[data-chart]').forEach(drawChart); $$('canvas[data-spark]').forEach(drawSpark); }
+addEventListener('resize', drawAll);
+
+/* ---------------- detail sheet ---------------- */
+const sheetEl = $('sheet'), sheetBS = new bootstrap.Offcanvas(sheetEl); let sheetKind = null, sheetSig = '';
+const stp = (key, min, max, step, unit) => `<div class="stepper" data-key="${key}" data-min="${min}" data-max="${max}" data-step="${step}" data-unit="${unit}"><button data-d="-1" aria-label="Decrease">−</button><output></output><button data-d="1" aria-label="Increase">+</button></div>`;
+const rangeSeg = '<div class="segc seg-range full mb-3"><button data-r="5m">5 min</button><button data-r="1h">1 hour</button><button data-r="24h">24 hours</button></div>';
+const SHEETS = {
+  soil: { title: 'Soil moisture', html: () => `<div class="bigv"><span data-t="soilV">--</span><small>%</small></div><p class="fw-semibold mt-2" data-t="soilChip"></p>${rangeSeg}<canvas class="chart mb-3" data-chart="soil"></canvas>
+    <div class="rowline"><div><b>Start below</b></div>${stp('onBelow', 0, 95, 5, '%')}</div><div class="rowline"><div><b>Stop at</b></div>${stp('offAbove', 5, 100, 5, '%')}</div>
+    <div class="d-flex gap-2 flex-wrap mt-3"><button class="btn btn-act" data-run-btn></button><a class="btn btn-ghost" href="#/irrigation">Irrigation settings</a></div>` },
+  food: { title: 'Nutrients', html: () => S && S.nutr && S.nutr.en ? `<div class="bigv"><span data-t="foodV">--</span><small>ppm</small></div><p class="fw-semibold mt-2" data-t="foodVerdict"></p>${rangeSeg}<canvas class="chart mb-3" data-chart="food"></canvas>
+    <div class="rowline"><div><b>Alert below</b></div>${stp('nutrLowPpm', 50, 3000, 50, 'ppm')}</div><a class="btn btn-ghost mt-3" href="#/nutrients">What to do when low</a>`
+    : `<p class="mut">Nutrient monitoring is off. Connect an EC/TDS probe to pin 32, then turn it on.</p><div class="d-flex gap-2 flex-wrap"><button class="btn btn-act" data-act="food-on">Turn on monitoring</button><a class="btn btn-ghost" href="#/nutrients">Setup guide</a></div>` },
+  tank: { title: 'Tank level', html: () => `<div class="bigv"><span data-t="tankV">--</span><small>%</small></div><p class="fw-semibold mt-2" data-t="tankChip"></p>${rangeSeg}<canvas class="chart mb-3" data-chart="tank"></canvas>
+    <div class="rowline"><div><b>Pause irrigation below</b></div>${stp('minTank', 5, 60, 5, '%')}</div><a class="btn btn-ghost mt-3" href="#/irrigation">Irrigation settings</a>` },
+  flow: { title: 'Flow and volume', html: () => `<div class="facts mb-3"><div class="fact"><b><span data-t="flowV">--</span> L/min</b><span>Flow now</span></div><div class="fact"><b><span data-t="usedV">--</span> L</b><span>Total used</span></div></div>${rangeSeg}<canvas class="chart mb-3" data-chart="flow"></canvas>
+    <button class="btn btn-ghost" data-act="reset-flow">Reset total</button>` },
+  pump: { title: 'Pump', html: () => `<div data-ctl>${ctlHTML()}</div>` }
+};
+function openSheet(k) { sheetKind = k; sheetSig = ''; fillSheet(true); sheetBS.show(); }
+function fillSheet(force) {
+  if (!sheetKind || !S) return; const sig = sheetKind + (S.nutr && S.nutr.en ? 1 : 0), d = SHEETS[sheetKind];
+  if (force || sig !== sheetSig) { sheetSig = sig; $('sheetTitle').textContent = d.title; $('sheetBody').innerHTML = d.html(); renderSteppers(S.cfg); }
+  bindIn($('sheetBody')); markSegs(); drawAll();
+}
+function bindIn(root) { const s = S, c = s.cfg, n = s.nutr || {}, run = s.pump; const V = { soilV: Math.round(s.soil), soilChip: s.soil < c.onBelow ? 'Below range' : s.soil >= c.offAbove ? 'Wet' : 'In range', foodV: n.ppm, foodVerdict: n.low ? 'Low. Apply fertiliser.' : !n.reliable ? 'On hold until the soil is moist.' : 'Normal.', tankV: Math.round(s.tank), tankChip: s.tank < c.minTank ? 'Critical' : s.tank < 35 ? 'Low' : 'Normal', flowV: s.flow.toFixed(1), usedV: s.total.toFixed(1),
+  ctlState: run ? 'Irrigating' : 'Idle', ctlTag: run ? 'Running' : s.mode === 'auto' ? 'Automatic' : 'Manual', ctlSub: run ? (s.waterLeft ? `${fmtDur(s.waterLeft)} remaining` : `Running for ${fmtDur(s.runSec)}`) : s.mode === 'auto' ? `Starts below ${c.onBelow}%, stops at ${c.offAbove}%` : 'Automatic irrigation is off',
+  autoNote: s.mode === 'auto' ? `Starts below ${c.onBelow}%, stops at ${c.offAbove}%.` : 'Off. The pump runs only when you start it.', holdTxt: `Automatic irrigation paused for ${Math.ceil(s.hold / 60)} min.` };
+  $$('[data-t]', root).forEach(e => { if (V[e.dataset.t] !== undefined) e.textContent = V[e.dataset.t]; });
+  $$('[data-run-btn]', root).forEach(b => { b.className = 'btn ' + (b.closest('[data-ctl]') ? 'w-100 ' : '') + (run ? 'btn-stop' : 'btn-act'); b.innerHTML = run ? '<i class="bi bi-stop-fill"></i><span>Stop irrigation</span>' : '<i class="bi bi-play-fill"></i><span>Start irrigation</span>'; });
+  $$('.sw-auto', root).forEach(e => e.checked = s.mode === 'auto'); $$('[data-hold]', root).forEach(e => e.classList.toggle('d-none', !(s.hold > 0 && s.mode === 'auto')));
+  $$('[data-prog]', root).forEach(e => e.style.width = run ? (s.waterLeft ? (100 * (1 - s.waterLeft / Math.max(1, s.waterLeft + s.runSec))).toFixed(0) : 100) + '%' : '0%'); }
+sheetEl.addEventListener('shown.bs.offcanvas', drawAll); sheetEl.addEventListener('hidden.bs.offcanvas', () => { sheetKind = null; }); addEventListener('hashchange', () => sheetBS.hide());
+
+/* ---------------- theme ---------------- */
+const mq = matchMedia('(prefers-color-scheme: dark)');
+function applyTheme() { const pref = localStorage.getItem('agriTheme') || 'light', t = pref === 'auto' ? (mq.matches ? 'dark' : 'light') : pref; document.documentElement.dataset.bsTheme = t; $$('#themeSeg button').forEach(b => b.classList.toggle('on', b.dataset.t === pref)); drawAll(); }
+$('themeSeg').onclick = e => { const b = e.target.closest('button'); if (b) { localStorage.setItem('agriTheme', b.dataset.t); applyTheme(); } };
+mq.addEventListener('change', applyTheme); applyTheme();
+$('optSound').checked = localStorage.getItem('agriSound') !== '0'; $('optSound').onchange = e => localStorage.setItem('agriSound', e.target.checked ? '1' : '0');
+
+/* ---------------- welcome ---------------- */
+const cleanIp = v => v.trim().replace(/^https?:\/\//, '').replace(/[\/\s].*$/, '');
+async function tryConnect() {
+  const ip = cleanIp($('ipInput').value), err = $('ipErr'), btn = $('btnGo'); err.textContent = ''; $('ipInput').classList.remove('bad');
+  if (!ip) { err.textContent = "Enter the address shown on the controller's display."; $('ipInput').classList.add('bad'); $('ipInput').focus(); return; }
+  if (location.protocol === 'https:') { err.textContent = 'This page is secure (https), so the browser blocks the controller. Open the downloaded file instead.'; return; }
+  btn.disabled = true; btn.textContent = 'Connecting…';
+  try { await rawFetch(ip, '/api/status'); host = ip; demo = false; localStorage.setItem('agriHost', host); startPolling(); location.hash = '#/overview'; toast('Connected', ip); }
+  catch (e) { err.textContent = `Can't reach ${ip}. Check the controller has power and this device is on the same Wi-Fi.`; $('ipInput').classList.add('bad'); }
+  finally { btn.disabled = false; btn.textContent = 'Connect'; }
+}
+$('btnGo').onclick = tryConnect; $('ipInput').addEventListener('keydown', e => e.key === 'Enter' && tryConnect());
+$('btnDemo').onclick = () => { demo = true; startPolling(); location.hash = '#/overview'; };
+if (location.protocol === 'https:') $('httpsWarn').classList.remove('d-none');
+
+/* ---------------- boot ---------------- */
+$('ipInput').value = host; renderLog(); bind({ site: siteName() });
+if (host) startPolling();
+if (!location.hash) location.replace(connected() ? '#/overview' : '#/welcome');
+route();
+</script>
+</body>
+</html>

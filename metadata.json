@@ -1,0 +1,8 @@
+{
+  "name": "SmartAgri",
+  "description": "Smart farm and greenhouse operations console for commercial agriculture: live soil, tank, nutrients, and flow telemetry, automated irrigation rules, pump protection, and ESP32 controller management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
